@@ -1,0 +1,81 @@
+using System.Collections.Generic;
+using System.IO;
+using System;
+
+private void GenerateAndSaveFakeData()
+{
+    var faker = new Bogus.Faker();
+    var transports = new List<Transport>();
+
+    for (int i = 0; i < 100; i++)
+    {
+        var type = faker.PickRandom(new[] { "Bus", "Vlak", "Letalo" });
+        DateTime departureTime = faker.Date.Future();
+        string departureLocation = faker.Address.City();
+        string departureCountry = faker.Address.Country();
+        string arrivalLocation = faker.Address.City();
+        string arrivalCountry = faker.Address.Country();
+        decimal price = faker.Random.Decimal(10, 100);
+        int seats = faker.Random.Int(20, 100);
+
+        Transport transport = null;
+        switch (type)
+        {
+            case "Bus":
+                transport = new Bus(departureTime, departureLocation, departureCountry, arrivalLocation, arrivalCountry, price, seats, faker.Commerce.ProductAdjective(), faker.Commerce.Product());
+                break;
+            case "Vlak":
+                transport = new Vlak(departureTime, departureLocation, departureCountry, arrivalLocation, arrivalCountry, price, seats, faker.Commerce.ProductAdjective());
+                break;
+            case "Letalo":
+                transport = new Letalo(departureTime, departureLocation, departureCountry, arrivalLocation, arrivalCountry, price, seats, faker.Commerce.Product());
+                break;
+        }
+
+        if (transport != null)
+        {
+            transports.Add(transport);
+        }
+    }
+
+    SaveToExcel(transports);
+}
+
+private void SaveToExcel(List<Transport> transports)
+{
+    using (var package = new ExcelPackage(new FileInfo(excelFilePath)))
+    {
+        var worksheet = package.Workbook.Worksheets[0];
+        int row = 2; // Starting row to add new data
+
+        foreach (var transport in transports)
+        {
+            worksheet.Cells[row, 1].Value = transport.GetType().Name;
+            worksheet.Cells[row, 2].Value = transport.UraOdhoda.ToString("g");
+            worksheet.Cells[row, 3].Value = transport.KrajOdhoda;
+            worksheet.Cells[row, 4].Value = transport.DrzavaOdhoda;
+            worksheet.Cells[row, 5].Value = transport.KrajPrihoda;
+            worksheet.Cells[row, 6].Value = transport.DrzavaPrihoda;
+            worksheet.Cells[row, 7].Value = transport.Cena;
+            worksheet.Cells[row, 8].Value = transport.SteviloSedezev;
+
+            if (transport is Bus bus)
+            {
+                worksheet.Cells[row, 9].Value = bus.TipAvtobusa;
+                worksheet.Cells[row, 10].Value = bus.Linija;
+            }
+            else if (transport is Vlak vlak)
+            {
+                worksheet.Cells[row, 9].Value = vlak.RazredVagona;
+            }
+            else if (transport is Letalo letalo)
+            {
+                worksheet.Cells[row, 9].Value = letalo.Linija;
+            }
+
+            row++;
+        }
+
+        package.Save();
+    }
+}
