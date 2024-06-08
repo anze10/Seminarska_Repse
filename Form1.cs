@@ -39,7 +39,7 @@ namespace Seminarska_Repse
                 {
                     var delovniList = paket.Workbook.Worksheets[0];
                     int steviloVrstic = delovniList.Dimension.Rows;
-                    for (int vrstica = 2; vrstica <= steviloVrstic; vrstica++) 
+                    for (int vrstica = 2; vrstica <= steviloVrstic; vrstica++)
                     {
                         string krajOdhoda = delovniList.Cells[vrstica, 3].Value?.ToString();
                         string krajPrihoda = delovniList.Cells[vrstica, 5].Value?.ToString();
@@ -58,7 +58,52 @@ namespace Seminarska_Repse
                         if (!string.IsNullOrEmpty(razredPrevoza) && !razrediPrevoza.Contains(razredPrevoza))
                             razrediPrevoza.Add(razredPrevoza);
 
-                      
+                        // Pretvorba vrednosti iz Excelovih celic
+                        string uraOdhodaString = delovniList.Cells[vrstica, 2].Value?.ToString();
+                        string uraPrihodaString = delovniList.Cells[vrstica, 2].Value?.ToString();
+                        string cenaString = delovniList.Cells[vrstica, 7].Value?.ToString();
+                        string steviloSedezevString = delovniList.Cells[vrstica, 8].Value?.ToString();
+
+                        DateTime uraOdhoda;
+                        DateTime uraPrihoda;
+                        decimal cena;
+                        int steviloSedezev;
+
+                        if (!DateTime.TryParse(uraOdhodaString, out uraOdhoda))
+                        {
+                            // Ravnajte ustrezno, če pretvorba ni uspela
+                            uraOdhoda = DateTime.MinValue;
+                        }
+
+                        if (!DateTime.TryParse(uraPrihodaString, out uraPrihoda))
+                        {
+                            // Ravnajte ustrezno, če pretvorba ni uspela
+                            uraPrihoda = DateTime.MinValue;
+                        }
+
+                        if (!decimal.TryParse(cenaString, out cena))
+                        {
+                            // Ravnajte ustrezno, če pretvorba ni uspela
+                            cena = 0m;
+                        }
+
+                        if (!int.TryParse(steviloSedezevString, out steviloSedezev))
+                        {
+                            // Ravnajte ustrezno, če pretvorba ni uspela
+                            steviloSedezev = 0;
+                        }
+
+                        // Dodajanje prevoza v seznam razpoložljivih prevozov
+                        razpoložljiviPrevozi.Add(new Transport(
+                            nacinPrevoza,
+                            uraOdhoda,
+                            krajOdhoda,
+                            delovniList.Cells[vrstica, 4].Value?.ToString(),
+                            krajPrihoda,
+                            delovniList.Cells[vrstica, 6].Value?.ToString(),
+                            cena,
+                            steviloSedezev
+                        ));
                     }
                 }
             }
@@ -82,7 +127,7 @@ namespace Seminarska_Repse
                     paket.Save();
                 }
             }
-           
+
             NapolniComboBox(Kraj_odhoda_u, krajiOdhoda);
             NapolniComboBox(kraj_povratka_u, krajiPrihoda);
             NapolniComboBox(Do_u, krajiPrihoda);
@@ -419,7 +464,7 @@ public class Transport
     public int SteviloProdanihSedezev = 0;
     public List<string> DodatneLastnosti;
 
-    protected Transport(string tipPrevoza, DateTime uraOdhoda, string krajOdhoda, string drzavaOdhoda,
+    public Transport(string tipPrevoza, DateTime uraOdhoda, string krajOdhoda, string drzavaOdhoda,
                      string krajPrihoda, string drzavaPrihoda, decimal cena, int steviloSedezev)
     {
         TipPrevoza = tipPrevoza;
