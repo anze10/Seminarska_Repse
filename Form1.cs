@@ -58,7 +58,7 @@ namespace Seminarska_Repse
                         if (!string.IsNullOrEmpty(razredPrevoza) && !razrediPrevoza.Contains(razredPrevoza))
                             razrediPrevoza.Add(razredPrevoza);
 
-                        // Pretvorba vrednosti iz Excelovih celic
+                        
                         string uraOdhodaString = delovniList.Cells[vrstica, 2].Value?.ToString();
                         string uraPrihodaString = delovniList.Cells[vrstica, 2].Value?.ToString();
                         string cenaString = delovniList.Cells[vrstica, 7].Value?.ToString();
@@ -71,29 +71,29 @@ namespace Seminarska_Repse
 
                         if (!DateTime.TryParse(uraOdhodaString, out uraOdhoda))
                         {
-                            // Ravnajte ustrezno, če pretvorba ni uspela
+                            
                             uraOdhoda = DateTime.MinValue;
                         }
 
                         if (!DateTime.TryParse(uraPrihodaString, out uraPrihoda))
                         {
-                            // Ravnajte ustrezno, če pretvorba ni uspela
+                            
                             uraPrihoda = DateTime.MinValue;
                         }
 
                         if (!decimal.TryParse(cenaString, out cena))
                         {
-                            // Ravnajte ustrezno, če pretvorba ni uspela
-                            cena = 0m;
+                            
+                            cena = 0;
                         }
 
                         if (!int.TryParse(steviloSedezevString, out steviloSedezev))
                         {
-                            // Ravnajte ustrezno, če pretvorba ni uspela
+                            
                             steviloSedezev = 0;
                         }
 
-                        // Dodajanje prevoza v seznam razpoložljivih prevozov
+                        
                         razpoložljiviPrevozi.Add(new Transport(
                             nacinPrevoza,
                             uraOdhoda,
@@ -121,8 +121,8 @@ namespace Seminarska_Repse
                     delovniList.Cells[1, 6].Value = "DržavaPrihoda";
                     delovniList.Cells[1, 7].Value = "Cena";
                     delovniList.Cells[1, 8].Value = "Sedeži";
-                    delovniList.Cells[1, 9].Value = "Dodatno1"; // TipAvtobusa ali RazredPrevoza ali LinijaLeta
-                    delovniList.Cells[1, 10].Value = "Dodatno2"; // Linija za Avtobus
+                    delovniList.Cells[1, 9].Value = "Dodatno1"; 
+                    delovniList.Cells[1, 10].Value = "Dodatno2"; 
 
                     paket.Save();
                 }
@@ -222,8 +222,7 @@ namespace Seminarska_Repse
             razpoložljiviPrevozi.ForEach(Console.WriteLine);
             foreach (var transport in razpoložljiviPrevozi)
             {
-                // Debugging output
-                Console.WriteLine($"Checking transport: {transport.KrajOdhoda} -> {transport.KrajPrihoda}");
+                
 
                 if (string.Equals(transport.KrajOdhoda, departureCity, StringComparison.OrdinalIgnoreCase)) 
                     
@@ -239,22 +238,64 @@ namespace Seminarska_Repse
                 Poti_u.Items.Add("Žal nismo mogli najti prevoza za vas.");
             }
         }
-    
 
-    
+
+        private void ZapisPotnikaVDateteko(Potnik potnik)
+        {
+            string filePath = "SeznamPotnikov.txt";
+
+            using (StreamWriter sw = new StreamWriter(filePath, true))
+            {
+                sw.WriteLine(potnik.ToString());
+            }
+        }
+
 
         private void Kupiu_Click(object sender, EventArgs e)
         {
             if (Poti_u.SelectedItem != null)
             {
                 string selectedTransportInfo = Poti_u.SelectedItem.ToString();
-                if (!string.IsNullOrEmpty(selectedTransportInfo))
+                Transport selectedTransport = null;
+
+                foreach (var t in razpoložljiviPrevozi)
+                {
+                    if ($"Tip prevoza: {t.TipPrevoza}, Odhod: {t.UraOdhoda}, Prihod: {t.UraPrihoda}, Cena: {t.Cena} EUR" == selectedTransportInfo)
+                    {
+                        selectedTransport = t;
+                        break;
+                    }
+                }
+
+                if (selectedTransport != null)
                 {
                     MessageBox.Show("Uspešno ste kupili vozovnico!", "Nakup uspešen");
+
+                    
+                    string imePotnika = Ime_priimek_u.Text;
+
+                    
+                    int steviloPotnikov;
+                    if (!int.TryParse(st_oseb_u.Text, out steviloPotnikov))
+                    {
+                        MessageBox.Show("Število potnikov ni veljavno.", "Napaka");
+                        return;
+                    }
+
+                    
+                    DateTime casOdhoda = selectedTransport.UraOdhoda;
+                    string krajOdhoda = selectedTransport.KrajOdhoda;
+                    string krajPrihoda = selectedTransport.KrajPrihoda;
+
+                    
+                    Potnik potnik = new Potnik(imePotnika, steviloPotnikov, selectedTransport, casOdhoda, krajOdhoda, krajPrihoda);
+
+                    
+                    ZapisPotnikaVDateteko(potnik);
                 }
                 else
                 {
-                    MessageBox.Show("Prosimo izberite prevoz iz seznama.", "Napaka");
+                    MessageBox.Show("Izbran prevoz ni veljaven.", "Napaka");
                 }
             }
             else
@@ -262,6 +303,7 @@ namespace Seminarska_Repse
                 MessageBox.Show("Prosimo izberite prevoz iz seznama.", "Napaka");
             }
         }
+       
 
         private void dodaj_prevoz_a_Click(object sender, EventArgs e)
         {
@@ -518,13 +560,7 @@ public class Letalo : Transport
 
 
 }
-public class Vozovnica
-{
-    public Transport Prevoz;
-    public DateTime DatumPotovanja;
-    public int NumberOfPeople;
-    public bool IsReturnTicket;
-}
+
 
     public class Potnik
     {
